@@ -1,6 +1,6 @@
 # Compliance Corpus Ingestor
 
-This project provides a simple ingestion pipeline that reads compliance-related documents (policies, RFP responses, etc.), chunks them into paragraphs or rows, generates sentence embeddings, and stores them in a [Qdrant](https://qdrant.tech/) vector database for later semantic search via an LLM.
+This project provides a simple ingestion script that reads compliance-related documents (policies, RFP responses, etc.), chunks them into paragraphs or rows, generates sentence embeddings, and stores them in a [Qdrant](https://qdrant.tech/) vector database for later to help fill out compliance questionnaires.
 
 ---
 
@@ -12,7 +12,7 @@ This project provides a simple ingestion pipeline that reads compliance-related 
 Each chunk is embedded using [all-MiniLM-L6-v2](https://www.sbert.net/docs/pretrained_models.html) and stored in Qdrant with metadata like:
 - `text`
 - `source` (filename)
-- `extension` (e.g. `.csv`)
+- `extension` (`.md`, `.csv`)
 - `category` (`policies`, `rfp_responses`, `documents`)
 
 ---
@@ -22,7 +22,9 @@ Each chunk is embedded using [all-MiniLM-L6-v2](https://www.sbert.net/docs/pretr
 ### 1. Start Qdrant via Docker
 
 ```bash
-docker run -p 6333:6333 -v $(pwd)/qdrant_data:/qdrant/storage qdrant/qdrant
+docker run -p 6333:6333 -p 6334:6334 \
+    -v "$(pwd)/qdrant_storage:/qdrant/storage:z" \
+    qdrant/qdrant
 ```
 
 ### 2. Install Dependencies
