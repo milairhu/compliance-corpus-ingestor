@@ -42,7 +42,6 @@ corpus/
 ├── rfp_responses/
 │   └── customer_x.csv
 └── documents/
-└── annex_info.txt
 ```
 
 ### 4. Run the Ingestor
