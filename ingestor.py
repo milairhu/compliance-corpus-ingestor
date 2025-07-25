@@ -1,6 +1,3 @@
-# Creating a basic project structure with an ingestor.py script
-# The script reads .md, .txt, and .csv files from a folder, chunks them, generates embeddings and pushes them to Qdrant
-
 import os
 import glob
 import uuid
