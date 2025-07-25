@@ -42,23 +42,36 @@ def chunk_text_file(filepath: str) -> List[str]:
     return chunks
 
 
-# TODO improve chunking for markdown files to handle headers and sections better
 def chunk_markdown_file(filepath: str) -> List[str]:
-    # Read the markdown and chunk by sections
     with open(filepath, "r", encoding="utf-8") as f:
-        content = f.read()
-    # Split by headers
+        lines = f.readlines()
+
     chunks = []
-    current_chunk = []
-    for line in content.splitlines():
+    current_chunk_lines = []
+    current_header = ""
+
+    for line in lines:
+        line = line.strip()
+
         if line.startswith("#"):
-            if current_chunk:
-                chunks.append("\n".join(current_chunk).strip())
-                current_chunk = []
-        current_chunk.append(line)
-    if current_chunk:
-        chunks.append("\n".join(current_chunk).strip())
-    return [chunk for chunk in chunks if chunk.strip()]
+            # If we hit a new header, flush the current chunk
+            if current_chunk_lines:
+                chunks.append(current_header + "\n\n" + "\n".join(current_chunk_lines).strip())
+                current_chunk_lines = []
+            current_header = line  # Save current header
+        elif line == "":
+            # Blank line: treat as paragraph separator
+            if current_chunk_lines and current_chunk_lines[-1] != "":
+                current_chunk_lines.append("")  # Force paragraph break
+        else:
+            current_chunk_lines.append(line)
+
+    # Don't forget the last chunk
+    if current_chunk_lines:
+        chunks.append(current_header + "\n\n" + "\n".join(current_chunk_lines).strip())
+
+    return [chunk.strip() for chunk in chunks if chunk.strip()]
+
 
 
 # Read and chunk .csv files (each row as a chunk)
