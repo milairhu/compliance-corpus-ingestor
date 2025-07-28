@@ -96,10 +96,17 @@ def process_file(filepath: str):
         return
 
     chunks = []
-    if ext in [".txt", ".md"]:
-        chunks = chunk_text_file(filepath)
-    elif ext == ".csv":
-        chunks = chunk_csv_file(filepath)
+    match ext:
+        case ".txt":
+            chunks = chunk_text_file(filepath)
+        case ".csv":
+            chunks = chunk_csv_file(filepath)
+        case ".md":
+            chunks = chunk_markdown_file(filepath)
+        case _ :
+            print(f"Unsupported file type: {ext} for file {filepath}")
+            return
+
     category = filepath.split('/')[1] if '/' in filepath else 'documents'
 
     for chunk in chunks:
