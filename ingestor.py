@@ -1,3 +1,4 @@
+import argparse
 import os
 import glob
 import uuid
@@ -14,7 +15,6 @@ from qdrant_client.http.models import PointStruct, VectorParams, Distance
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
 # Qdrant client setup
-qdrant = QdrantClient(url="http://localhost:6333")
 collection_name = "compliance_corpus"  # Use of only one collection
 
 
@@ -127,6 +127,13 @@ def process_file(filepath: str):
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Ingest files into Qdrant")
+    parser.add_argument("--qdrant-url", type=str, default="http://localhost:6333", help="URL of the Qdrant instance")
+    args = parser.parse_args()
+
+    global qdrant
+    qdrant = QdrantClient(url=args.qdrant_url)
+
     print("Starting the ingestion process...")
     ensure_collection()
     for filepath in glob.glob("corpus/**/*", recursive=True):
