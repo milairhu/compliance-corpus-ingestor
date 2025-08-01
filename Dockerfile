@@ -13,4 +13,4 @@ COPY ingestor.py .
 COPY corpus ./corpus
 
 # Set the default command to run the ingester
-CMD ["python", "ingestor.py", "--qdrant-url", "${QDRANT_URL}"]
+CMD ["python", "ingestor.py", "--qdrant-url", "${QDRANT_URL}", "--corpus", "${CORPUS_DIR}"]

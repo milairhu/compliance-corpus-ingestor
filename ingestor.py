@@ -129,6 +129,7 @@ def process_file(filepath: str):
 def main():
     parser = argparse.ArgumentParser(description="Ingest files into Qdrant")
     parser.add_argument("--qdrant-url", type=str, default="http://localhost:6333", help="URL of the Qdrant instance")
+    parser.add_argument("--corpus", type=str, default="corpus", help="Directory containing the corpus files")
     args = parser.parse_args()
 
     global qdrant
@@ -136,7 +137,8 @@ def main():
 
     print("Starting the ingestion process...")
     ensure_collection()
-    for filepath in glob.glob("corpus/**/*", recursive=True):
+    pathname = args.corpus+ "/**/*"
+    for filepath in glob.glob(pathname, recursive=True):
         if os.path.isfile(filepath):
             process_file(filepath)
 
