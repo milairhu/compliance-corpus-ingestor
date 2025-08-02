@@ -1,9 +1,10 @@
 name: Build and Push Docker image
 
 on:
-  push:
-    branches:
-      - main
+  release:
+    types: [ published ]
+    tags:
+      - v*
 
 jobs:
   build-and-push:
@@ -29,5 +30,5 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}:${{ github.sha }}
+            ghcr.io/${{ github.repository }}:${{ github.ref }}
             ghcr.io/${{ github.repository }}:latest
