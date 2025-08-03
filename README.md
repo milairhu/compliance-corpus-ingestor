@@ -1,53 +1,85 @@
-# Compliance Corpus Ingestor
+# Compliance Corpus Ingestor API
 
-This project provides a simple ingestion script that reads compliance-related documents (policies, RFP responses, etc.), chunks them into paragraphs or rows, generates sentence embeddings, and stores them in a [Qdrant](https://qdrant.tech/) vector database for later to help fill out compliance questionnaires.
-
----
-
-## 📂 Supported File Types
-
-- `.md`, `.txt` — Chunked by paragraphs
-- `.csv` — Chunked by rows
-
-Each chunk is embedded using [all-MiniLM-L6-v2](https://www.sbert.net/docs/pretrained_models.html) and stored in Qdrant with metadata like:
-- `text`
-- `source` (filename)
-- `extension` (`.md`, `.csv`)
-- `category` (`policies`, `rfp_responses`, `documents`)
+This project exposes an API for:
+- Ingesting compliance documents (policies, RFPs, etc.) into Qdrant.
+- Cleaning the Qdrant database
+- On-the-fly text vectorization
 
 ---
 
-## 🚀 Quickstart
+## Launch Qdrant
 
-### 1. Start Qdrant via Docker
-
-```bash
+```
 docker run -p 6333:6333 -p 6334:6334 \
-    -v "$(pwd)/qdrant_storage:/qdrant/storage:z" \
-    qdrant/qdrant
+-v "$(pwd)/qdrant_storage:/qdrant/storage:z" \
+qdrant/qdrant
 ```
 
-### 2. Install Dependencies
 
-```bash
-pip install -r requirements.txt
+## 🚦 API Endpoints
+
+- **POST `/embed`**  
+  Returns the vectorized (embedding) version of an input string.
+
+- **POST `/corpus/ingest`**  
+  Triggers ingestion of the policy corpus into Qdrant.
+
+- **POST `/corpus/clean`**  
+    Empties the Qdrant database.
+---
+
+## 📂 Corpus Organization
+
+Place your documents in `/app/corpus` with the following structure:
+
+```
+/app/corpus/ 
+      ├── policies/ 
+             │ 
+             └── access_control.md 
+      ├── rfp_responses/ 
+             │ 
+             └── customer_x.csv 
+     └── documents/
 ```
 
-### 3. Put the documents in a corpus/ directory
+## ▶️ Quickstart
 
-Create a directory structure like this:
+Build and run the API in Docker:
 
+docker build -t ingest-transform-api .
+docker run -d --name ingest-transform-api -p 8000:8000 ingest-transform-api
+
+## 🧪 Usage
+
+### /embed
+Make a POST request to the /embed endpoint:
 ```
-corpus/
-├── policies/
-│   └── access_control.md
-├── rfp_responses/
-│   └── customer_x.csv
-└── documents/
+curl -X POST http://localhost:8000/embed \
+-H "Content-Type: application/json" \
+-d '{"texts": ["What are your data retention policies?"]}'
 ```
 
-### 4. Run the Ingestor
+Example response:
 
-```bash
-python ingestor.py
+{
+"vectors": [
+[0.123, -0.456, 0.789, ...]  // Vector of floats
+]
+}
+
+### /corpus/ingest
+Trigger ingestion of the corpus.
+```
+curl -X POST http://localhost:8000/corpus/ingest \
+-H "Content-Type: application/json" \
+-d '{"qdrant_url": "http://localhost:6333", "corpus": "/corpus"}'
+```
+
+### /corpus/clean
+Empty the Qdrant database:
+```
+curl -X POST http://localhost:8000/corpus/clean \
+-H "Content-Type: application/json" \
+-d '{"qdrant_url": "http://localhost:6333"}'
 ```

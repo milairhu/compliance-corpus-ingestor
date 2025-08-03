@@ -8,6 +8,8 @@ from typing import List
 from sentence_transformers import SentenceTransformer
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import PointStruct, VectorParams, Distance
+from fastapi import FastAPI, Request
+from pydantic import BaseModel
 
 # ====== Variables ===== #
 
@@ -125,23 +127,45 @@ def process_file(filepath: str):
             points=[PointStruct(id=str(uuid.uuid4()), vector=embedding, payload=payload)]
         )
 
+# ====== FastAPI Setup ===== #
 
-def main():
-    parser = argparse.ArgumentParser(description="Ingest files into Qdrant")
-    parser.add_argument("--qdrant-url", type=str, default="http://localhost:6333", help="URL of the Qdrant instance")
-    parser.add_argument("--corpus", type=str, default="corpus", help="Directory containing the corpus files")
-    args = parser.parse_args()
+app = FastAPI()
 
+class EmbedRequest(BaseModel):
+    texts: List[str]
+
+
+class EmbedResponse(BaseModel):
+    vectors: List[List[float]]
+
+class IngestRequest(BaseModel):
+    qdrant_url: str = "http://localhost:6333"
+    corpus: str = "corpus"
+
+class CleanRequest(BaseModel):
+    qdrant_url: str = "http://localhost:6333"
+
+@app.post("/embed", response_model=EmbedResponse)
+def embed_texts(request: EmbedRequest):
+    vectors = model.encode(request.texts).tolist()
+    return {"vectors": vectors}
+
+@app.post("/corpus/ingest")
+def ingest_files(request: IngestRequest):
     global qdrant
-    qdrant = QdrantClient(url=args.qdrant_url)
-
+    qdrant = QdrantClient(url=request.qdrant_url)
     print("Starting the ingestion process...")
     ensure_collection()
-    pathname = args.corpus+ "/**/*"
+    pathname = request.corpus+ "/**/*"
     for filepath in glob.glob(pathname, recursive=True):
         if os.path.isfile(filepath):
             process_file(filepath)
 
-
-if __name__ == "__main__":
-    main()
+@app.post("/corpus/clean")
+def clean_corpus(request: CleanRequest):
+    global qdrant
+    qdrant = QdrantClient(url=request.qdrant_url)
+    print(f"Cleaning collection: {collection_name}")
+    qdrant.delete_collection(collection_name=collection_name)
+    ensure_collection()
+    return {"message": "Corpus cleaned and collection recreated."}
