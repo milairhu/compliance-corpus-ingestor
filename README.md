@@ -48,7 +48,7 @@ Place your documents in `/app/corpus` with the following structure:
 Build and run the API in Docker:
 
 docker build -t ingest-transform-api .
-docker run -d --name ingest-transform-api -p 8000:8000 ingest-transform-api
+docker run -d  -v ./corpus:app/corpus --name ingest-transform-api -p 8000:8000 ingest-transform-api
 
 ## 🧪 Usage
 
@@ -73,7 +73,7 @@ Trigger ingestion of the corpus.
 ```
 curl -X POST http://localhost:8000/corpus/ingest \
 -H "Content-Type: application/json" \
--d '{"qdrant_url": "http://localhost:6333", "corpus": "/corpus"}'
+-d '{"qdrant_url": "http://qdrant:6333", "corpus": "/app/corpus"}'
 ```
 
 ### /corpus/clean
@@ -81,5 +81,5 @@ Empty the Qdrant database:
 ```
 curl -X POST http://localhost:8000/corpus/clean \
 -H "Content-Type: application/json" \
--d '{"qdrant_url": "http://localhost:6333"}'
+-d '{"qdrant_url": "http://qdrant:6333"}'
 ```

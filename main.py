@@ -142,15 +142,21 @@ class IngestRequest(BaseModel):
     qdrant_url: str = "http://localhost:6333"
     corpus: str = "corpus"
 
+class IngestResponse(BaseModel):
+    done : bool = False
+
 class CleanRequest(BaseModel):
     qdrant_url: str = "http://localhost:6333"
+
+class CleanResponse(BaseModel):
+    done : bool = False
 
 @app.post("/embed", response_model=EmbedResponse)
 def embed_texts(request: EmbedRequest):
     vectors = model.encode(request.texts).tolist()
     return {"vectors": vectors}
 
-@app.post("/corpus/ingest")
+@app.post("/corpus/ingest", response_model=IngestResponse)
 def ingest_files(request: IngestRequest):
     global qdrant
     qdrant = QdrantClient(url=request.qdrant_url)
@@ -160,12 +166,13 @@ def ingest_files(request: IngestRequest):
     for filepath in glob.glob(pathname, recursive=True):
         if os.path.isfile(filepath):
             process_file(filepath)
+    return {"done": True}
 
-@app.post("/corpus/clean")
+@app.post("/corpus/clean", response_model=CleanResponse)
 def clean_corpus(request: CleanRequest):
     global qdrant
     qdrant = QdrantClient(url=request.qdrant_url)
     print(f"Cleaning collection: {collection_name}")
     qdrant.delete_collection(collection_name=collection_name)
     ensure_collection()
-    return {"message": "Corpus cleaned and collection recreated."}
+    return {"done": True}
