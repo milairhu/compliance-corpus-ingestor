@@ -48,7 +48,8 @@ Place your documents in `/app/corpus` with the following structure:
 Build and run the API in Docker:
 
 docker build -t ingest-transform-api .
-docker run -d  -v ./corpus:app/corpus --name ingest-transform-api -p 8000:8000 ingest-transform-api
+docker run -d -it -p 8000:8000  -v ./corpus:/app/corpus -e QDRANT_URL="http://<qdrant_container_url>:6333" -e CORPUS="/app/corpus" ingest-transform-api
+
 
 ## 🧪 Usage
 
