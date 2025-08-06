@@ -176,3 +176,8 @@ def clean_corpus(request: CleanRequest):
     qdrant.delete_collection(collection_name=collection_name)
     ensure_collection()
     return {"done": True}
+
+@app.get("/ready")
+def ready():
+    is_ready = os.getenv("IS_READY", "false").lower() == "true"
+    return {"status": is_ready}

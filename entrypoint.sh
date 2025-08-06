@@ -10,7 +10,7 @@ if [ -z "$CORPUS" ]; then
   exit 1
 fi
 
-uvicorn main:app --host 0.0.0.0 --port 8000 &
+IS_READY=false uvicorn main:app --host 0.0.0.0 --port 8000 &
 UVICORN_PID=$!
 
 sleep 15
@@ -23,4 +23,6 @@ curl -X POST http://localhost:8000/corpus/ingest \
   -H "Content-Type: application/json" \
   -d '{"qdrant_url": "'${QDRANT_URL}'", "corpus": "'${CORPUS}'"}'
 
-wait $UVICORN_PID
+kill $UVICORN_PID
+
+exec IS_READY=true uvicorn main:app --host 0.0.0.0 --port 8000
