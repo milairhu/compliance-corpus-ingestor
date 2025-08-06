@@ -25,4 +25,4 @@ curl -X POST http://localhost:8000/corpus/ingest \
 
 kill $UVICORN_PID
 
-exec IS_READY=true uvicorn main:app --host 0.0.0.0 --port 8000
+IS_READY=true uvicorn main:app --host 0.0.0.0 --port 8000
