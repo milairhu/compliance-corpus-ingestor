@@ -1,6 +1,6 @@
-import argparse
 import os
 import glob
+import re
 import uuid
 import csv
 
@@ -43,8 +43,26 @@ def chunk_text_file(filepath: str) -> List[str]:
     chunks = [chunk.strip() for chunk in content.split("\n\n") if chunk.strip()]
     return chunks
 
+# Find the lowest level of title in a markdown file
+def find_markdown_file_depth(filepath: str) -> int:
+    with open(filepath, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+
+    depth = 0
+    for line in lines:
+        if line.startswith("#"):
+            current_depth = line.count("#")
+            if current_depth > depth:
+                depth = current_depth
+    return depth
 
 def chunk_markdown_file(filepath: str) -> List[str]:
+    max_depth = find_markdown_file_depth(filepath)
+    # The split is performed at the level above the deepest header found (e.g., if max is 3, we split at level 2,
+    # but if 1, we split at level 1)
+    split_level = max(1, min(max_depth, 3) - 1)
+    header_pattern = re.compile(rf"^({'#' * split_level})\s+(.+)$")
+
     with open(filepath, "r", encoding="utf-8") as f:
         lines = f.readlines()
 
@@ -53,28 +71,23 @@ def chunk_markdown_file(filepath: str) -> List[str]:
     current_header = ""
 
     for line in lines:
-        line = line.strip()
-
-        if line.startswith("#"):
-            # If we hit a new header, flush the current chunk
+        line = line.rstrip()
+        if header_pattern.match(line):
+            # New header at desired level
             if current_chunk_lines:
+                # Save the current chunk
                 chunks.append(current_header + "\n\n" + "\n".join(current_chunk_lines).strip())
                 current_chunk_lines = []
-            current_header = line  # Save current header
-        elif line == "":
-            # Blank line: treat as paragraph separator
-            if current_chunk_lines and current_chunk_lines[-1] != "":
-                current_chunk_lines.append("")  # Force paragraph break
+            current_header = line
         else:
+            # Regular line, add to current chunk
             current_chunk_lines.append(line)
 
-    # Don't forget the last chunk
+    # Add last chunk
     if current_chunk_lines:
         chunks.append(current_header + "\n\n" + "\n".join(current_chunk_lines).strip())
 
     return [chunk.strip() for chunk in chunks if chunk.strip()]
-
-
 
 # Read and chunk .csv files (each row as a chunk)
 def chunk_csv_file(filepath: str) -> List[str]:
@@ -104,11 +117,12 @@ def process_file(filepath: str):
         case ".csv":
             chunks = chunk_csv_file(filepath)
         case ".md":
+            print(f"Processing markdown file: {filepath}")
             chunks = chunk_markdown_file(filepath)
         case _ :
             print(f"Unsupported file type: {ext} for file {filepath}")
             return
-
+    print(f"Generated chunks : {chunks[:3]}... Total: {len(chunks)}")
     category = filepath.split('/')[1] if '/' in filepath else 'documents'
 
     for chunk in chunks:
